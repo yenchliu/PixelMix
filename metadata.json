@@ -1,0 +1,6 @@
+{
+  "name": "Photo Collage Generator",
+  "description": "Create stylish photo collages with customizable grid layouts, ratios, pan/zoom crop, text overlays, and high-resolution export.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

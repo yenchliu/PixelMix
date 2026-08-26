@@ -437,6 +437,67 @@ function drawEmptyCellPlaceholder(
 }
 
 /**
+ * Generate high-res image Blob for export and sharing
+ */
+export async function exportCollageBlob(
+  template: GridTemplate,
+  cellImages: Record<string, CellImage | undefined>,
+  config: CollageConfig,
+  textOverlays: TextOverlay[],
+  aspectRatioValue: number,
+  quality: 'normal' | 'high' | 'ultra',
+  format: 'png' | 'jpeg'
+): Promise<Blob> {
+  const targetLongestEdge = quality === 'ultra' ? 3000 : quality === 'high' ? 2048 : 1080;
+
+  let exportW = targetLongestEdge;
+  let exportH = targetLongestEdge;
+
+  if (aspectRatioValue >= 1) {
+    exportW = targetLongestEdge;
+    exportH = Math.round(targetLongestEdge / aspectRatioValue);
+  } else {
+    exportH = targetLongestEdge;
+    exportW = Math.round(targetLongestEdge * aspectRatioValue);
+  }
+
+  const exportCanvas = document.createElement('canvas');
+  exportCanvas.width = exportW;
+  exportCanvas.height = exportH;
+
+  const scaleMultiplier = exportW / 600;
+
+  await renderCollage(
+    exportCanvas,
+    template,
+    cellImages,
+    config,
+    textOverlays,
+    {
+      isExport: true,
+      scaleMultiplier,
+    }
+  );
+
+  const mimeType = format === 'jpeg' ? 'image/jpeg' : 'image/png';
+  const qualityLevel = format === 'jpeg' ? 0.95 : undefined;
+
+  return new Promise((resolve, reject) => {
+    exportCanvas.toBlob(
+      (blob) => {
+        if (blob) {
+          resolve(blob);
+        } else {
+          reject(new Error('Failed to generate image blob'));
+        }
+      },
+      mimeType,
+      qualityLevel
+    );
+  });
+}
+
+/**
  * Generate high-res image data URL for export
  */
 export async function exportCollageImage(
@@ -465,7 +526,6 @@ export async function exportCollageImage(
   exportCanvas.width = exportW;
   exportCanvas.height = exportH;
 
-  // Base preview width reference is around 600px, so scale multiplier scales gap/padding/borders proportionally
   const scaleMultiplier = exportW / 600;
 
   await renderCollage(
